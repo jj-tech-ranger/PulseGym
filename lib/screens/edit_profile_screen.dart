@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../services/database_helper.dart';
+import '../services/session_manager.dart';
 import '../utils/app_colors.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -260,6 +262,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       child: ElevatedButton(
                         onPressed: () {
                           if (_formKey.currentState!.validate()) {
+                                              // Update user in database
+                                              final userId = await SessionManager.instance.getUserId();
+                                              if (userId != null) {
+                                                                    await DatabaseHelper.instance.updateUser(
+                                                                                            userId,
+                                                                                            {
+                                                                                                                      'name': _nameController.text.trim(),
+                                                                                                                      'email': _emailController.text.trim(),
+                                                                                                                    },
+                                                                                          );
+                                                                    // Update session with new data
+                                                                    await SessionManager.instance.saveSession(
+                                                                                            userId: userId,
+                                                                                            userName: _nameController.text.trim(),
+                                                                                            userEmail: _emailController.text.trim(),
+                                                                                          );
+                                                                  }
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text('Profile updated successfully!'),
