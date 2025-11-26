@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/database_helper.dart';
+import '../../services/session_manager.dart';
 import '../../utils/theme.dart';
 import '../onboarding/gender_screen.dart';
 
@@ -26,6 +27,15 @@ class _SignupScreenState extends State<SignupScreen> {
           'email': _emailController.text.trim(),
           'password_hash': _passwordController.text,
         });
+                      // Get the newly created user and save session
+                      final user = await DatabaseHelper.instance.getUserByEmail(_emailController.text.trim());
+                      if (user != null) {
+                                        await SessionManager.instance.saveSession(
+                                                            userId: user['id'],
+                                                            userName: user['name'],
+                                                            userEmail: user['email'],
+                                                          );
+                                      }
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const GenderScreen()),
