@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+// TODO: Convert to StatefulWidget to load user data from database
+import '../services/database_helper.dart';
+import '../services/session_manager.dart';
 import '../utils/app_colors.dart';
 import 'edit_profile_screen.dart';
 import 'settings_screen.dart';
