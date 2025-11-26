@@ -197,7 +197,112 @@ class DatabaseHelper {
     final digest = sha256.convert(bytes);
     return digest.toString();
   }
+  // Fix updateUser to accept Map instead of User object
+  Future<int> updateUserData(int userId, Map<String, dynamic> data) async {
+    final db = await database;
+    return await db.update(
+      'users',
+      data,
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+  }
 
+  // Debug: Print all users
+  Future<void> debugPrintAllUsers() async {
+    final db = await database;
+    final List<Map<String, dynamic>> users = await db.query('users');
+    
+    print('═══════════════════════════════════════');
+    print('📊 DATABASE USERS (${users.length} total)');
+    print('═══════════════════════════════════════');
+    
+    if (users.isEmpty) {
+      print('⚠️  No users found in database');
+    } else {
+      for (var user in users) {
+        print('');
+        print('👤 USER ID: ${user['id']}');
+        print('   Name: ${user['name']}');
+        print('   Email: ${user['email']}');
+        print('   Gender: ${user['gender']}');
+        print('   Age: ${user['age']} years');
+        print('   Weight: ${user['weight']} kg');
+        print('   Height: ${user['height']} cm');
+        print('   Goal: ${user['goal']}');
+        print('   Activity Level: ${user['activity_level']}');
+        print('   Created: ${user['created_at']}');
+        print('   ─────────────────────────────────');
+      }
+    }
+    
+    print('═══════════════════════════════════════\n');
+  }
+
+  // Debug: Print all reminders
+  Future<void> debugPrintAllReminders() async {
+    final db = await database;
+    final List<Map<String, dynamic>> reminders = await db.query('reminders');
+    
+    print('═══════════════════════════════════════');
+    print('⏰ DATABASE REMINDERS (${reminders.length} total)');
+    print('═══════════════════════════════════════');
+    
+    if (reminders.isEmpty) {
+      print('⚠️  No reminders found in database');
+    } else {
+      for (var reminder in reminders) {
+        print('');
+        print('🔔 REMINDER ID: ${reminder['id']}');
+        print('   User ID: ${reminder['user_id']}');
+        print('   Title: ${reminder['title']}');
+        print('   Time: ${reminder['time']}');
+        print('   Active: ${reminder['is_active'] == 1 ? '✅ Yes' : '❌ No'}');
+        print('   ─────────────────────────────────');
+      }
+    }
+    
+    print('═══════════════════════════════════════\n');
+  }
+
+  // Get database statistics
+  Future<Map<String, dynamic>> getDatabaseStats() async {
+    final db = await database;
+    
+    final userCount = Sqflite.firstIntValue(
+      await db.rawQuery('SELECT COUNT(*) FROM users')
+    ) ?? 0;
+    
+    final reminderCount = Sqflite.firstIntValue(
+      await db.rawQuery('SELECT COUNT(*) FROM reminders')
+    ) ?? 0;
+    
+    final activeReminders = Sqflite.firstIntValue(
+      await db.rawQuery('SELECT COUNT(*) FROM reminders WHERE is_active = 1')
+    ) ?? 0;
+    
+    return {
+      'total_users': userCount,
+      'total_reminders': reminderCount,
+      'active_reminders': activeReminders,
+    };
+  }
+
+  // Clear all users (for testing)
+  Future<void> clearAllUsers() async {
+    final db = await database;
+    await db.delete('users');
+    print('🗑️  All users cleared from database');
+  }
+
+  // Clear all reminders (for testing)
+  Future<void> clearAllReminders() async {
+    final db = await database;
+    await db.delete('reminders');
+    print('🗑️  All reminders cleared from database');
+  }
+
+  
   Future close() async {
     final db = await database;
     db.close();
