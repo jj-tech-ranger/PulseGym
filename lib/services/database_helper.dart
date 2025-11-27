@@ -1,9 +1,11 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'package:crypto/crypto.dart';
-import 'dart:convert';
 import '../models/user_model.dart';
+import '../models/workout_model.dart';
+import '../models/meal_model.dart';
 
+/// DatabaseHelper Singleton for PulseGym
+/// Manages SQLite database operations for Users, Workouts, and Meals
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
@@ -33,73 +35,69 @@ class DatabaseHelper {
       CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
-        email TEXT NOT NULL UNIQUE,
-        password_hash TEXT NOT NULL,
         gender TEXT,
         age INTEGER,
         weight REAL,
         height REAL,
-        activity_level TEXT,
         goal TEXT,
-        created_at TEXT NOT NULL
+        activity_level TEXT
       )
     ''');
 
-    // Create Reminders table
+    // Create Workouts table
     await db.execute('''
-      CREATE TABLE reminders (
+      CREATE TABLE workouts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
         title TEXT NOT NULL,
-        time TEXT NOT NULL,
-        is_active INTEGER NOT NULL DEFAULT 1,
-        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+        category TEXT NOT NULL,
+        duration TEXT NOT NULL,
+        video_asset_path TEXT,
+        is_favorite INTEGER DEFAULT 0,
+        description TEXT,
+        calories INTEGER,
+        target_muscle TEXT
       )
     ''');
 
-    // Create Favorites table for saving workouts
+    // Create Meals table
     await db.execute('''
-      CREATE TABLE favorites (
+      CREATE TABLE meals (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        workout_id TEXT NOT NULL,
-        workout_name TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+        name TEXT NOT NULL,
+        calories INTEGER NOT NULL,
+        type TEXT NOT NULL,
+        image_asset_path TEXT,
+        description TEXT,
+        prep_time INTEGER,
+        ingredients TEXT,
+        instructions TEXT
       )
     ''');
   }
 
-  // User operations
-  Future<int> createUser(Map<String, dynamic> user) async {
+  // ==================== USER OPERATIONS ====================
+
+  Future<int> insertUser(User user) async {
     final db = await database;
-    user['password_hash'] = _hashPassword(user['password_hash']);
-    user['created_at'] = DateTime.now().toIso8601String();
-    return await db.insert('users', user);
+    return await db.insert('users', user.toMap());
   }
 
-  Future<User?> getUserByEmail(String email) async {
-    final db = await database;
-    final maps = await db.query(
-      'users',
-      where: 'email = ?',
-      whereArgs: [email],
-    );
-
-    if (maps.isNotEmpty) {
-      return User.fromMap(maps.first);
-    }
-    return null;
-  }
-
-  Future<User?> getUserById(int id) async {
+  Future<User?> getUser(int id) async {
     final db = await database;
     final maps = await db.query(
       'users',
       where: 'id = ?',
       whereArgs: [id],
     );
+    if (maps.isNotEmpty) {
+      return User.fromMap(maps.first);
+    }
+    return null;
+  }
 
+  Future<User?> getFirstUser() async {
+    final db = await database;
+    final maps = await db.query('users', limit: 1);
     if (maps.isNotEmpty) {
       return User.fromMap(maps.first);
     }
@@ -116,195 +114,121 @@ class DatabaseHelper {
     );
   }
 
-  Future<bool> validateLogin(String email, String password) async {
+  Future<int> deleteUser(int id) async {
     final db = await database;
-    final hashedPassword = _hashPassword(password);
+    return await db.delete(
+      'users',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // ==================== WORKOUT OPERATIONS ====================
+
+  Future<int> insertWorkout(Workout workout) async {
+    final db = await database;
+    return await db.insert('workouts', workout.toMap());
+  }
+
+  Future<List<Workout>> getAllWorkouts() async {
+    final db = await database;
+    final maps = await db.query('workouts');
+    return maps.map((map) => Workout.fromMap(map)).toList();
+  }
+
+  Future<List<Workout>> getWorkoutsByCategory(String category) async {
+    final db = await database;
     final maps = await db.query(
-      'users',
-      where: 'email = ? AND password_hash = ?',
-      whereArgs: [email, hashedPassword],
+      'workouts',
+      where: 'category = ?',
+      whereArgs: [category],
     );
-
-    return maps.isNotEmpty;
+    return maps.map((map) => Workout.fromMap(map)).toList();
   }
 
-  // Reminder operations
-  Future<int> createReminder(Map<String, dynamic> reminder) async {
+  Future<List<Workout>> getFavoriteWorkouts() async {
     final db = await database;
-    return await db.insert('reminders', reminder);
-  }
-
-  Future<List<Map<String, dynamic>>> getReminders(int userId) async {
-    final db = await database;
-    return await db.query(
-      'reminders',
-      where: 'user_id = ?',
-      whereArgs: [userId],
+    final maps = await db.query(
+      'workouts',
+      where: 'is_favorite = ?',
+      whereArgs: [1],
     );
+    return maps.map((map) => Workout.fromMap(map)).toList();
   }
 
-  Future<int> updateReminder(int id, Map<String, dynamic> reminder) async {
+  Future<int> updateWorkout(Workout workout) async {
     final db = await database;
     return await db.update(
-      'reminders',
-      reminder,
+      'workouts',
+      workout.toMap(),
+      where: 'id = ?',
+      whereArgs: [workout.id],
+    );
+  }
+
+  Future<int> toggleWorkoutFavorite(int id, bool isFavorite) async {
+    final db = await database;
+    return await db.update(
+      'workouts',
+      {'is_favorite': isFavorite ? 1 : 0},
       where: 'id = ?',
       whereArgs: [id],
     );
   }
 
-  Future<int> deleteReminder(int id) async {
+  // ==================== MEAL OPERATIONS ====================
+
+  Future<int> insertMeal(Meal meal) async {
+    final db = await database;
+    return await db.insert('meals', meal.toMap());
+  }
+
+  Future<List<Meal>> getAllMeals() async {
+    final db = await database;
+    final maps = await db.query('meals');
+    return maps.map((map) => Meal.fromMap(map)).toList();
+  }
+
+  Future<List<Meal>> getMealsByType(String type) async {
+    final db = await database;
+    final maps = await db.query(
+      'meals',
+      where: 'type = ?',
+      whereArgs: [type],
+    );
+    return maps.map((map) => Meal.fromMap(map)).toList();
+  }
+
+  Future<int> updateMeal(Meal meal) async {
+    final db = await database;
+    return await db.update(
+      'meals',
+      meal.toMap(),
+      where: 'id = ?',
+      whereArgs: [meal.id],
+    );
+  }
+
+  Future<int> deleteMeal(int id) async {
     final db = await database;
     return await db.delete(
-      'reminders',
+      'meals',
       where: 'id = ?',
       whereArgs: [id],
     );
   }
 
-  // Favorites operations
-  Future<int> addFavorite(int userId, String workoutId, String workoutName) async {
-    final db = await database;
-    return await db.insert('favorites', {
-      'user_id': userId,
-      'workout_id': workoutId,
-      'workout_name': workoutName,
-      'created_at': DateTime.now().toIso8601String(),
-    });
-  }
+  // ==================== UTILITY ====================
 
-  Future<List<Map<String, dynamic>>> getFavorites(int userId) async {
-    final db = await database;
-    return await db.query(
-      'favorites',
-      where: 'user_id = ?',
-      whereArgs: [userId],
-    );
-  }
-
-  Future<int> removeFavorite(int userId, String workoutId) async {
-    final db = await database;
-    return await db.delete(
-      'favorites',
-      where: 'user_id = ? AND workout_id = ?',
-      whereArgs: [userId, workoutId],
-    );
-  }
-
-  // Helper methods
-  String _hashPassword(String password) {
-    final bytes = utf8.encode(password);
-    final digest = sha256.convert(bytes);
-    return digest.toString();
-  }
-  // Fix updateUser to accept Map instead of User object
-  Future<int> updateUserData(int userId, Map<String, dynamic> data) async {
-    final db = await database;
-    return await db.update(
-      'users',
-      data,
-      where: 'id = ?',
-      whereArgs: [userId],
-    );
-  }
-
-  // Debug: Print all users
-  Future<void> debugPrintAllUsers() async {
-    final db = await database;
-    final List<Map<String, dynamic>> users = await db.query('users');
-    
-    print('═══════════════════════════════════════');
-    print('📊 DATABASE USERS (${users.length} total)');
-    print('═══════════════════════════════════════');
-    
-    if (users.isEmpty) {
-      print('⚠️  No users found in database');
-    } else {
-      for (var user in users) {
-        print('');
-        print('👤 USER ID: ${user['id']}');
-        print('   Name: ${user['name']}');
-        print('   Email: ${user['email']}');
-        print('   Gender: ${user['gender']}');
-        print('   Age: ${user['age']} years');
-        print('   Weight: ${user['weight']} kg');
-        print('   Height: ${user['height']} cm');
-        print('   Goal: ${user['goal']}');
-        print('   Activity Level: ${user['activity_level']}');
-        print('   Created: ${user['created_at']}');
-        print('   ─────────────────────────────────');
-      }
-    }
-    
-    print('═══════════════════════════════════════\n');
-  }
-
-  // Debug: Print all reminders
-  Future<void> debugPrintAllReminders() async {
-    final db = await database;
-    final List<Map<String, dynamic>> reminders = await db.query('reminders');
-    
-    print('═══════════════════════════════════════');
-    print('⏰ DATABASE REMINDERS (${reminders.length} total)');
-    print('═══════════════════════════════════════');
-    
-    if (reminders.isEmpty) {
-      print('⚠️  No reminders found in database');
-    } else {
-      for (var reminder in reminders) {
-        print('');
-        print('🔔 REMINDER ID: ${reminder['id']}');
-        print('   User ID: ${reminder['user_id']}');
-        print('   Title: ${reminder['title']}');
-        print('   Time: ${reminder['time']}');
-        print('   Active: ${reminder['is_active'] == 1 ? '✅ Yes' : '❌ No'}');
-        print('   ─────────────────────────────────');
-      }
-    }
-    
-    print('═══════════════════════════════════════\n');
-  }
-
-  // Get database statistics
-  Future<Map<String, dynamic>> getDatabaseStats() async {
-    final db = await database;
-    
-    final userCount = Sqflite.firstIntValue(
-      await db.rawQuery('SELECT COUNT(*) FROM users')
-    ) ?? 0;
-    
-    final reminderCount = Sqflite.firstIntValue(
-      await db.rawQuery('SELECT COUNT(*) FROM reminders')
-    ) ?? 0;
-    
-    final activeReminders = Sqflite.firstIntValue(
-      await db.rawQuery('SELECT COUNT(*) FROM reminders WHERE is_active = 1')
-    ) ?? 0;
-    
-    return {
-      'total_users': userCount,
-      'total_reminders': reminderCount,
-      'active_reminders': activeReminders,
-    };
-  }
-
-  // Clear all users (for testing)
-  Future<void> clearAllUsers() async {
-    final db = await database;
-    await db.delete('users');
-    print('🗑️  All users cleared from database');
-  }
-
-  // Clear all reminders (for testing)
-  Future<void> clearAllReminders() async {
-    final db = await database;
-    await db.delete('reminders');
-    print('🗑️  All reminders cleared from database');
-  }
-
-  
   Future close() async {
     final db = await database;
     db.close();
+  }
+
+  Future<bool> isDatabaseEmpty() async {
+    final db = await database;
+    final result = await db.rawQuery('SELECT COUNT(*) FROM workouts');
+    final count = Sqflite.firstIntValue(result) ?? 0;
+    return count == 0;
   }
 }
