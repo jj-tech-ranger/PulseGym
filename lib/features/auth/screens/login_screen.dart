@@ -31,7 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (user != null && user.password == _passwordController.text) {
         await AuthService().login(user);
-        authNotifier.login();
+  
         if (mounted) {
           context.go('/home');
         }
