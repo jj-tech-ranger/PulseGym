@@ -20,7 +20,9 @@ class _SignupScreenState extends State<SignupScreen> {
   final _passwordController = TextEditingController();
   final _ageController = TextEditingController();
   final _weightController = TextEditingController();
+  final _heightController = TextEditingController();
   String? _selectedGender;
+  String? _selectedGoal;
 
   @override
   void dispose() {
@@ -29,11 +31,25 @@ class _SignupScreenState extends State<SignupScreen> {
     _passwordController.dispose();
     _ageController.dispose();
     _weightController.dispose();
+    _heightController.dispose();
     super.dispose();
   }
 
   void _signup() async {
     if (_formKey.currentState!.validate()) {
+      if (_selectedGender == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a gender')),
+        );
+        return;
+      }
+      if (_selectedGoal == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a fitness goal')),
+        );
+        return;
+      }
+
       final newUser = User(
         name: _nameController.text,
         email: _emailController.text,
@@ -41,6 +57,8 @@ class _SignupScreenState extends State<SignupScreen> {
         gender: _selectedGender,
         age: int.tryParse(_ageController.text),
         weight: double.tryParse(_weightController.text),
+        height: double.tryParse(_heightController.text),
+        goal: _selectedGoal,
       );
 
       final userId = await DatabaseHelper.instance.insertUser(newUser);
@@ -112,19 +130,41 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                 ],
               ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: _heightController,
+                decoration: const InputDecoration(labelText: 'Height (cm)'),
+                keyboardType: TextInputType.number,
+                validator: (value) => value!.isEmpty ? 'Please enter your height' : null,
+              ),
               const SizedBox(height: 30),
               Text('Gender', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 10),
               _buildGenderSelector(),
+              const SizedBox(height: 30),
+              Text('Fitness Goal', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 10),
+              _buildGoalSelector(),
               const SizedBox(height: 40),
               ElevatedButton(
                 onPressed: _signup,
-                child: const Text('Sign Up'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryNavy,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text('Sign Up', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600)),
               ),
               const SizedBox(height: 20),
               TextButton(
                 onPressed: () => context.go('/login'),
-                child: const Text('Already have an account? Login'),
+                child: Text(
+                  'Already have an account? Login',
+                  style: GoogleFonts.poppins(color: AppColors.primaryNavy),
+                ),
               ),
             ],
           ),
@@ -171,6 +211,47 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGoalSelector() {
+    return Column(
+      children: [
+        _goalCard('Weight Loss', Icons.trending_down),
+        const SizedBox(height: 12),
+        _goalCard('Muscle Gain', Icons.fitness_center),
+      ],
+    );
+  }
+
+  Widget _goalCard(String goal, IconData icon) {
+    final isSelected = _selectedGoal == goal;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedGoal = goal),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primaryNavy : AppColors.backgroundWhite,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppColors.primaryNavy : Colors.grey[300]!,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: isSelected ? Colors.white : AppColors.primaryNavy, size: 30),
+            const SizedBox(width: 16),
+            Text(
+              goal,
+              style: TextStyle(
+                color: isSelected ? Colors.white : AppColors.primaryNavy,
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+              ),
+            ),
+          ],
         ),
       ),
     );
