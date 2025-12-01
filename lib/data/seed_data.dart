@@ -21,7 +21,7 @@ class SeedData {
   static Future<void> seedDatabase() async {
     final db = await DatabaseHelper.instance.database;
     
-    final userCount = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM users'));
+    final userCount = (await db.rawQuery('SELECT COUNT(*) FROM users')).first.values.first as int;
     if (userCount != null && userCount > 0) {
       if (kDebugMode) print('Database already seeded');
       return;
