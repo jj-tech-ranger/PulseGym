@@ -1,8 +1,13 @@
+import 'package:flutter/foundation.dart';
+
 /// User Model for PulseGym
-/// Matches SQLite User Table Schema
+/// Represents a user's profile and fitness-related data.
+@immutable
 class User {
   final int? id;
   final String name;
+  final String email;
+  final String password;
   final String? gender;
   final int? age;
   final double? weight;
@@ -10,9 +15,11 @@ class User {
   final String? goal;
   final String? activityLevel;
 
-  User({
+  const User({
     this.id,
     required this.name,
+    required this.email,
+    required this.password,
     this.gender,
     this.age,
     this.weight,
@@ -21,11 +28,24 @@ class User {
     this.activityLevel,
   });
 
-  /// Convert User to Map for SQLite
+  // BMI Calculation (Body Mass Index)
+  // Formula: weight (kg) / (height (m))^2
+  double calculateBMI() {
+    if (height == null || height! <= 0 || weight == null || weight! <= 0) {
+      return 0.0;
+    }
+    // Convert height from cm to meters
+    final heightInMeters = height! / 100;
+    return weight! / (heightInMeters * heightInMeters);
+  }
+
+  // Convert User to a Map for database storage
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'name': name,
+      'email': email,
+      'password': password,
       'gender': gender,
       'age': age,
       'weight': weight,
@@ -35,24 +55,28 @@ class User {
     };
   }
 
-  /// Create User from SQLite Map
+  // Create User from a Map from the database
   factory User.fromMap(Map<String, dynamic> map) {
     return User(
-      id: map['id'] as int?,
-      name: map['name'] as String,
-      gender: map['gender'] as String?,
-      age: map['age'] as int?,
-      weight: map['weight'] as double?,
-      height: map['height'] as double?,
-      goal: map['goal'] as String?,
-      activityLevel: map['activity_level'] as String?,
+      id: map['id'],
+      name: map['name'],
+      email: map['email'],
+      password: map['password'],
+      gender: map['gender'],
+      age: map['age'],
+      weight: map['weight'],
+      height: map['height'],
+      goal: map['goal'],
+      activityLevel: map['activity_level'],
     );
   }
 
-  /// Create a copy with updated fields
+  // Create a copy of the User with updated values
   User copyWith({
     int? id,
     String? name,
+    String? email,
+    String? password,
     String? gender,
     int? age,
     double? weight,
@@ -63,6 +87,8 @@ class User {
     return User(
       id: id ?? this.id,
       name: name ?? this.name,
+      email: email ?? this.email,
+      password: password ?? this.password,
       gender: gender ?? this.gender,
       age: age ?? this.age,
       weight: weight ?? this.weight,
@@ -70,29 +96,5 @@ class User {
       goal: goal ?? this.goal,
       activityLevel: activityLevel ?? this.activityLevel,
     );
-  }
-
-  /// Calculate BMI
-  double? get bmi {
-    if (weight != null && height != null && height! > 0) {
-      final heightInMeters = height! / 100;
-      return weight! / (heightInMeters * heightInMeters);
-    }
-    return null;
-  }
-
-  /// Get BMI Category
-  String? get bmiCategory {
-    final bmiValue = bmi;
-    if (bmiValue == null) return null;
-    if (bmiValue < 18.5) return 'Underweight';
-    if (bmiValue < 25) return 'Normal';
-    if (bmiValue < 30) return 'Overweight';
-    return 'Obese';
-  }
-
-  @override
-  String toString() {
-    return 'User(id: $id, name: $name, gender: $gender, age: $age, weight: $weight, height: $height, goal: $goal, activityLevel: $activityLevel)';
   }
 }

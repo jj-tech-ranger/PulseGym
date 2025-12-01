@@ -100,7 +100,7 @@ class _ActivityCard extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.secondaryPastel.withOpacity(0.3)
+              ? AppColors.secondaryPastelBlue.withOpacity(0.3)
               : AppColors.cardBackground,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
@@ -120,7 +120,7 @@ class _ActivityCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.primaryNavy : AppColors.secondaryPastel,
+                color: isSelected ? AppColors.primaryNavy : AppColors.secondaryPastelBlue,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(

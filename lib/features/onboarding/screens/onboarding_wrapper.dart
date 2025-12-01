@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme.dart';
 import '../../../models/user_model.dart';
 import '../../../services/database_helper.dart';
@@ -72,7 +72,7 @@ class _OnboardingWrapperState extends State<OnboardingWrapper> {
     await DatabaseHelper.instance.insertUser(user);
     
     if (mounted) {
-      Navigator.of(context).pushReplacementNamed('/home');
+      context.go('/home');
     }
   }
 
@@ -85,9 +85,9 @@ class _OnboardingWrapperState extends State<OnboardingWrapper> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.backgroundWhite,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.backgroundWhite,
         elevation: 0,
         leading: _currentPage > 0
             ? IconButton(
@@ -118,7 +118,7 @@ class _OnboardingWrapperState extends State<OnboardingWrapper> {
                     decoration: BoxDecoration(
                       color: index <= _currentPage
                           ? AppColors.primaryNavy
-                          : AppColors.secondaryPastel,
+                          : AppColors.secondaryPastelBlue,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -180,7 +180,7 @@ class _OnboardingWrapperState extends State<OnboardingWrapper> {
                 onPressed: _canProceed() ? _nextPage : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryNavy,
-                  disabledBackgroundColor: AppColors.secondaryPastel,
+                  disabledBackgroundColor: AppColors.secondaryPastelBlue,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),

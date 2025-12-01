@@ -3,9 +3,8 @@ import 'package:path/path.dart';
 import '../models/user_model.dart';
 import '../models/workout_model.dart';
 import '../models/meal_model.dart';
+import '../models/community_post_model.dart';
 
-/// DatabaseHelper Singleton for PulseGym
-/// Manages SQLite database operations for Users, Workouts, and Meals
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
@@ -24,17 +23,36 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 3,
       onCreate: _createDB,
+      onUpgrade: _onUpgrade,
     );
   }
 
   Future _createDB(Database db, int version) async {
-    // Create User table
+    await _createUsersTable(db);
+    await _createWorkoutsTable(db);
+    await _createMealsTable(db);
+    await _createCommunityPostsTable(db);
+  }
+
+  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('ALTER TABLE users ADD COLUMN email TEXT');
+      await db.execute('ALTER TABLE users ADD COLUMN password TEXT');
+    }
+    if (oldVersion < 3) {
+      await _createCommunityPostsTable(db);
+    }
+  }
+
+  Future<void> _createUsersTable(Database db) async {
     await db.execute('''
       CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        password TEXT NOT NULL,
         gender TEXT,
         age INTEGER,
         weight REAL,
@@ -43,8 +61,9 @@ class DatabaseHelper {
         activity_level TEXT
       )
     ''');
+  }
 
-    // Create Workouts table
+  Future<void> _createWorkoutsTable(Database db) async {
     await db.execute('''
       CREATE TABLE workouts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,8 +77,9 @@ class DatabaseHelper {
         target_muscle TEXT
       )
     ''');
+  }
 
-    // Create Meals table
+  Future<void> _createMealsTable(Database db) async {
     await db.execute('''
       CREATE TABLE meals (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -75,6 +95,18 @@ class DatabaseHelper {
     ''');
   }
 
+  Future<void> _createCommunityPostsTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE community_posts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT NOT NULL,
+        content TEXT NOT NULL,
+        likes INTEGER NOT NULL,
+        timestamp TEXT NOT NULL
+      )
+    ''');
+  }
+
   // ==================== USER OPERATIONS ====================
 
   Future<int> insertUser(User user) async {
@@ -82,7 +114,20 @@ class DatabaseHelper {
     return await db.insert('users', user.toMap());
   }
 
-  Future<User?> getUser(int id) async {
+  Future<User?> getUserByEmail(String email) async {
+    final db = await database;
+    final maps = await db.query(
+      'users',
+      where: 'email = ?',
+      whereArgs: [email],
+    );
+    if (maps.isNotEmpty) {
+      return User.fromMap(maps.first);
+    }
+    return null;
+  }
+
+  Future<User?> getUserById(int id) async {
     final db = await database;
     final maps = await db.query(
       'users',
@@ -95,13 +140,10 @@ class DatabaseHelper {
     return null;
   }
 
-  Future<User?> getFirstUser() async {
+  Future<List<User>> getAllUsers() async {
     final db = await database;
-    final maps = await db.query('users', limit: 1);
-    if (maps.isNotEmpty) {
-      return User.fromMap(maps.first);
-    }
-    return null;
+    final maps = await db.query('users');
+    return maps.map((map) => User.fromMap(map)).toList();
   }
 
   Future<int> updateUser(User user) async {
@@ -114,21 +156,7 @@ class DatabaseHelper {
     );
   }
 
-  Future<int> deleteUser(int id) async {
-    final db = await database;
-    return await db.delete(
-      'users',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
-
   // ==================== WORKOUT OPERATIONS ====================
-
-  Future<int> insertWorkout(Workout workout) async {
-    final db = await database;
-    return await db.insert('workouts', workout.toMap());
-  }
 
   Future<List<Workout>> getAllWorkouts() async {
     final db = await database;
@@ -136,24 +164,17 @@ class DatabaseHelper {
     return maps.map((map) => Workout.fromMap(map)).toList();
   }
 
-  Future<List<Workout>> getWorkoutsByCategory(String category) async {
+  Future<Workout?> getWorkoutById(int id) async {
     final db = await database;
     final maps = await db.query(
       'workouts',
-      where: 'category = ?',
-      whereArgs: [category],
+      where: 'id = ?',
+      whereArgs: [id],
     );
-    return maps.map((map) => Workout.fromMap(map)).toList();
-  }
-
-  Future<List<Workout>> getFavoriteWorkouts() async {
-    final db = await database;
-    final maps = await db.query(
-      'workouts',
-      where: 'is_favorite = ?',
-      whereArgs: [1],
-    );
-    return maps.map((map) => Workout.fromMap(map)).toList();
+    if (maps.isNotEmpty) {
+      return Workout.fromMap(maps.first);
+    }
+    return null;
   }
 
   Future<int> updateWorkout(Workout workout) async {
@@ -166,22 +187,7 @@ class DatabaseHelper {
     );
   }
 
-  Future<int> toggleWorkoutFavorite(int id, bool isFavorite) async {
-    final db = await database;
-    return await db.update(
-      'workouts',
-      {'is_favorite': isFavorite ? 1 : 0},
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
-
   // ==================== MEAL OPERATIONS ====================
-
-  Future<int> insertMeal(Meal meal) async {
-    final db = await database;
-    return await db.insert('meals', meal.toMap());
-  }
 
   Future<List<Meal>> getAllMeals() async {
     final db = await database;
@@ -189,44 +195,24 @@ class DatabaseHelper {
     return maps.map((map) => Meal.fromMap(map)).toList();
   }
 
-  Future<List<Meal>> getMealsByType(String type) async {
+  // ==================== COMMUNITY POSTS OPERATIONS ====================
+
+  Future<int> insertPost(CommunityPost post) async {
     final db = await database;
-    final maps = await db.query(
-      'meals',
-      where: 'type = ?',
-      whereArgs: [type],
-    );
-    return maps.map((map) => Meal.fromMap(map)).toList();
+    return await db.insert('community_posts', post.toMap());
   }
 
-  Future<int> updateMeal(Meal meal) async {
+  Future<List<CommunityPost>> getAllPosts() async {
     final db = await database;
-    return await db.update(
-      'meals',
-      meal.toMap(),
-      where: 'id = ?',
-      whereArgs: [meal.id],
-    );
-  }
-
-  Future<int> deleteMeal(int id) async {
-    final db = await database;
-    return await db.delete(
-      'meals',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    final maps = await db.query('community_posts', orderBy: 'timestamp DESC');
+    return maps.map((map) => CommunityPost.fromMap(map)).toList();
   }
 
   // ==================== UTILITY ====================
 
-  Future close() async {
-    final db = await database;
-    db.close();
-  }
-
   Future<bool> isDatabaseEmpty() async {
     final db = await database;
+    // Check workout table to decide if seeding is needed.
     final result = await db.rawQuery('SELECT COUNT(*) FROM workouts');
     final count = Sqflite.firstIntValue(result) ?? 0;
     return count == 0;

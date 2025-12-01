@@ -11,8 +11,8 @@ import 'package:google_fonts/google_fonts.dart';
 class AppColors {
   // Primary Colors
   static const Color primaryNavy = Color(0xFF1B2A41);
-  static const Color secondaryPastel = Color(0xFFACCBE1);
-  static const Color background = Color(0xFFFFFFFF);
+  static const Color secondaryPastelBlue = Color(0xFFACCBE1);
+  static const Color backgroundWhite = Color(0xFFFFFFFF);
   static const Color textDarkSlate = Color(0xFF2F4F4F);
   
   // Additional UI Colors
@@ -29,13 +29,13 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       primaryColor: AppColors.primaryNavy,
-      scaffoldBackgroundColor: AppColors.background,
+      scaffoldBackgroundColor: AppColors.backgroundWhite,
       
       // Color Scheme
       colorScheme: const ColorScheme.light(
         primary: AppColors.primaryNavy,
-        secondary: AppColors.secondaryPastel,
-        surface: AppColors.background,
+        secondary: AppColors.secondaryPastelBlue,
+        surface: AppColors.backgroundWhite,
         onPrimary: Colors.white,
         onSecondary: AppColors.textDarkSlate,
         onSurface: AppColors.textDarkSlate,
@@ -157,8 +157,8 @@ class AppTheme {
       ),
       
       // Card Theme
-      cardTheme: CardTheme(
-        color: AppColors.background,
+      cardTheme: CardThemeData(
+        color: AppColors.backgroundWhite,
         elevation: 2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
@@ -191,7 +191,7 @@ class AppTheme {
       
       // Bottom Navigation Bar Theme
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.backgroundWhite,
         selectedItemColor: AppColors.primaryNavy,
         unselectedItemColor: AppColors.textDarkSlate.withOpacity(0.5),
         selectedLabelStyle: GoogleFonts.poppins(
@@ -208,14 +208,14 @@ class AppTheme {
       
       // Progress Indicator Theme
       progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.secondaryPastel,
+        color: AppColors.secondaryPastelBlue,
         linearTrackColor: AppColors.divider,
       ),
       
       // Slider Theme
       sliderTheme: SliderThemeData(
         activeTrackColor: AppColors.primaryNavy,
-        inactiveTrackColor: AppColors.secondaryPastel,
+        inactiveTrackColor: AppColors.secondaryPastelBlue,
         thumbColor: AppColors.primaryNavy,
         overlayColor: AppColors.primaryNavy.withOpacity(0.2),
         valueIndicatorColor: AppColors.primaryNavy,
@@ -226,7 +226,7 @@ class AppTheme {
       ),
       
       // Tab Bar Theme
-      tabBarTheme: TabBarTheme(
+      tabBarTheme: TabBarThemeData(
         labelColor: AppColors.primaryNavy,
         unselectedLabelColor: AppColors.textDarkSlate.withOpacity(0.5),
         labelStyle: GoogleFonts.poppins(

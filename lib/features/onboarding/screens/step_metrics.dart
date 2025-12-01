@@ -107,7 +107,7 @@ class _MetricCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.secondaryPastel.withOpacity(0.3),
+                  color: AppColors.secondaryPastelBlue.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: AppColors.primaryNavy, size: 24),
@@ -149,7 +149,7 @@ class _MetricCard extends StatelessWidget {
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
               activeTrackColor: AppColors.primaryNavy,
-              inactiveTrackColor: AppColors.secondaryPastel,
+              inactiveTrackColor: AppColors.secondaryPastelBlue,
               thumbColor: AppColors.primaryNavy,
               overlayColor: AppColors.primaryNavy.withOpacity(0.2),
               trackHeight: 6,

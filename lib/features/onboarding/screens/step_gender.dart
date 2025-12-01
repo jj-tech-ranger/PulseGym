@@ -85,7 +85,7 @@ class _GenderCard extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.secondaryPastel.withOpacity(0.3) : AppColors.cardBackground,
+          color: isSelected ? AppColors.secondaryPastelBlue.withOpacity(0.3) : AppColors.cardBackground,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected ? AppColors.primaryNavy : Colors.transparent,
@@ -106,7 +106,7 @@ class _GenderCard extends StatelessWidget {
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.primaryNavy : AppColors.secondaryPastel,
+                color: isSelected ? AppColors.primaryNavy : AppColors.secondaryPastelBlue,
                 shape: BoxShape.circle,
               ),
               child: Icon(

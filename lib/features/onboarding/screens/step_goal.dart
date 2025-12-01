@@ -111,7 +111,7 @@ class _GoalCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.secondaryPastel.withOpacity(0.3)
+              ? AppColors.secondaryPastelBlue.withOpacity(0.3)
               : AppColors.cardBackground,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
@@ -132,7 +132,7 @@ class _GoalCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.primaryNavy : AppColors.secondaryPastel,
+                color: isSelected ? AppColors.primaryNavy : AppColors.secondaryPastelBlue,
                 shape: BoxShape.circle,
               ),
               child: Icon(

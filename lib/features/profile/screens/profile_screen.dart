@@ -52,12 +52,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _user = users.first;
         _nameController.text = _user!.name;
-        _ageController.text = _user!.age.toString();
-        _weightController.text = _user!.weight.toString();
-        _heightController.text = _user!.height.toString();
-        _selectedGender = _user!.gender;
-        _selectedGoal = _user!.goal;
-        _selectedActivity = _user!.activityLevel;
+        _ageController.text = _user!.age?.toString() ?? '';
+        _weightController.text = _user!.weight?.toString() ?? '';
+        _heightController.text = _user!.height?.toString() ?? '';
+        _selectedGender = _user!.gender ?? 'Male';
+        _selectedGoal = _user!.goal ?? 'Stay Fit';
+        _selectedActivity = _user!.activityLevel ?? 'Intermediate';
         _isLoading = false;
       });
     } else {
@@ -121,11 +121,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             _buildHeader(),
             const SizedBox(height: 32),
-            _buildCard('Personal', [_buildRow('Gender', _user!.gender), _buildRow('Age', '${_user!.age} years')]),
+            _buildCard('Personal', [_buildRow('Gender', _user!.gender ?? 'N/A'), _buildRow('Age', '${_user!.age ?? 0} years')]),
             const SizedBox(height: 16),
-            _buildCard('Body Metrics', [_buildRow('Weight', '${_user!.weight.toStringAsFixed(1)} kg'), _buildRow('Height', '${_user!.height.toStringAsFixed(0)} cm'), _buildRow('BMI', '${_user!.calculateBMI().toStringAsFixed(1)}')]),
+            _buildCard('Body Metrics', [_buildRow('Weight', '${_user!.weight?.toStringAsFixed(1) ?? '0.0'} kg'), _buildRow('Height', '${_user!.height?.toStringAsFixed(0) ?? '0'} cm'), _buildRow('BMI', _user!.calculateBMI().toStringAsFixed(1))]),
             const SizedBox(height: 16),
-            _buildCard('Fitness', [_buildRow('Goal', _user!.goal), _buildRow('Activity', _user!.activityLevel)]),
+            _buildCard('Fitness', [_buildRow('Goal', _user!.goal ?? 'N/A'), _buildRow('Activity', _user!.activityLevel ?? 'N/A')]),
             if (_isEditing) ...[const SizedBox(height: 24), _buildSaveBtn()],
           ],
         ),
@@ -147,7 +147,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(color: AppColors.secondaryPastelBlue.withOpacity(0.3), borderRadius: BorderRadius.circular(20)),
-          child: Text(_user!.goal, style: const TextStyle(fontFamily: 'Poppins', fontSize: 14, color: AppColors.primaryNavy)),
+          child: Text(_user!.goal ?? '', style: const TextStyle(fontFamily: 'Poppins', fontSize: 14, color: AppColors.primaryNavy)),
         ),
       ],
     );

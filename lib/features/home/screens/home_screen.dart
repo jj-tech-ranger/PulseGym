@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme.dart';
 import '../../../models/user_model.dart';
 import '../../../services/database_helper.dart';
+import '../../nutrition/screens/meal_plan_screen.dart';
+import '../../community/screens/community_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,153 +15,191 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  User? _currentUser;
-  bool _isLoading = true;
+  int _selectedIndex = 0;
+  final PageController _pageController = PageController();
 
-  @override
-  void initState() {
-    super.initState();
-    _loadUser();
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+      _pageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    });
   }
 
-  Future<void> _loadUser() async {
-    final users = await DatabaseHelper.instance.getAllUsers();
-    if (users.isNotEmpty) {
-      setState(() {
-        _currentUser = users.first;
-        _isLoading = false;
-      });
-    } else {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: AppColors.backgroundWhite,
-        body: Center(
-          child: CircularProgressIndicator(
-            color: AppColors.primaryNavy,
-          ),
-        ),
-      );
-    }
-
     return Scaffold(
-      backgroundColor: AppColors.backgroundWhite,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 32),
-              Expanded(
-                child: _buildMenuGrid(),
-              ),
-            ],
-          ),
-        ),
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        children: const [
+          _HomeContent(),
+          MealPlanScreen(),
+          CommunityScreen(),
+        ],
       ),
       bottomNavigationBar: _buildBottomNav(),
     );
   }
 
-  Widget _buildHeader() {
-    final userName = _currentUser?.name ?? 'User';
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
+  Widget _buildBottomNav() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.backgroundWhite,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 2,
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
+          backgroundColor: AppColors.backgroundWhite,
+          selectedItemColor: AppColors.primaryNavy,
+          unselectedItemColor: AppColors.textDarkSlate.withOpacity(0.5),
+          selectedLabelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          unselectedLabelStyle: GoogleFonts.poppins(),
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.restaurant_menu),
+              label: 'Nutrition',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.people),
+              label: 'Community',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeContent extends StatelessWidget {
+  const _HomeContent();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<User?>(
+      future: _loadUser(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: AppColors.primaryNavy),
+          );
+        }
+
+        final user = snapshot.data;
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Hi, $userName',
-                  style: const TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryNavy,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Time to challenge your limits.',
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 14,
-                    color: AppColors.textDarkSlate,
-                  ),
+                _buildHeader(context, user),
+                const SizedBox(height: 32),
+                Expanded(
+                  child: _buildMenuGrid(context, user),
                 ),
               ],
             ),
-            GestureDetector(
-              onTap: () => context.push('/profile'),
-              child: Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: AppColors.secondaryPastelBlue,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.primaryNavy,
-                    width: 2,
-                  ),
-                ),
-                child: const Icon(
-                  Icons.person,
-                  color: AppColors.primaryNavy,
-                  size: 28,
-                ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<User?> _loadUser() async {
+    final users = await DatabaseHelper.instance.getAllUsers();
+    return users.isNotEmpty ? users.first : null;
+  }
+
+  Widget _buildHeader(BuildContext context, User? user) {
+    final userName = user?.name ?? 'User';
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Hi, $userName',
+              style: GoogleFonts.poppins(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryNavy,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Time to challenge your limits.',
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: AppColors.textDarkSlate,
               ),
             ),
           ],
+        ),
+        GestureDetector(
+          onTap: () => context.go('/profile'),
+          child: CircleAvatar(
+            radius: 25,
+            backgroundColor: AppColors.secondaryPastelBlue,
+            child: const Icon(
+              Icons.person,
+              color: AppColors.primaryNavy,
+              size: 28,
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildMenuGrid() {
+  Widget _buildMenuGrid(BuildContext context, User? user) {
     return GridView.count(
       crossAxisCount: 2,
       mainAxisSpacing: 20,
       crossAxisSpacing: 20,
       childAspectRatio: 1.0,
+      physics: const NeverScrollableScrollPhysics(),
       children: [
         _buildMenuTile(
           title: 'Workouts',
           icon: Icons.fitness_center,
-          color: AppColors.primaryNavy,
-          onTap: () => context.push('/workouts'),
+          onTap: () => context.go('/workouts'),
         ),
-        _buildMenuTile(
-          title: 'Nutrition',
-          icon: Icons.restaurant_menu,
-          color: AppColors.primaryNavy,
-          onTap: () => context.push('/nutrition'),
-        ),
-        _buildProgressTile(),
-        _buildMenuTile(
-          title: 'Community',
-          icon: Icons.people,
-          color: AppColors.primaryNavy,
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Community feature coming soon!'),
-                backgroundColor: AppColors.primaryNavy,
-              ),
-            );
-          },
-        ),
+        _buildProgressTile(user),
       ],
     );
   }
@@ -166,7 +207,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildMenuTile({
     required String title,
     required IconData icon,
-    required Color color,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
@@ -182,31 +222,15 @@ class _HomeScreenState extends State<HomeScreen> {
               offset: const Offset(0, 5),
             ),
           ],
-          border: Border.all(
-            color: AppColors.secondaryPastelBlue.withOpacity(0.5),
-            width: 1,
-          ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.secondaryPastelBlue.withOpacity(0.3),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                size: 36,
-                color: color,
-              ),
-            ),
+            Icon(icon, size: 48, color: AppColors.primaryNavy),
             const SizedBox(height: 12),
             Text(
               title,
-              style: const TextStyle(
-                fontFamily: 'Poppins',
+              style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: AppColors.primaryNavy,
@@ -218,10 +242,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildProgressTile() {
-    final currentWeight = _currentUser?.weight ?? 70;
-    final goal = _currentUser?.goal ?? 'Stay Fit';
-    double progress = 0.65; // Placeholder progress
+  Widget _buildProgressTile(User? user) {
+    final currentWeight = user?.weight ?? 70;
+    double progress = 0.65; // Placeholder
 
     return Container(
       decoration: BoxDecoration(
@@ -234,140 +257,49 @@ class _HomeScreenState extends State<HomeScreen> {
             offset: const Offset(0, 5),
           ),
         ],
-        border: Border.all(
-          color: AppColors.secondaryPastelBlue.withOpacity(0.5),
-          width: 1,
-        ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'Progress',
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.primaryNavy,
-              ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'Your Progress',
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primaryNavy,
             ),
-            const SizedBox(height: 12),
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                SizedBox(
-                  width: 60,
-                  height: 60,
-                  child: CircularProgressIndicator(
-                    value: progress,
-                    strokeWidth: 6,
-                    backgroundColor: AppColors.secondaryPastelBlue.withOpacity(0.3),
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      AppColors.primaryNavy,
-                    ),
-                  ),
-                ),
-                Text(
-                  '${(progress * 100).toInt()}%',
-                  style: const TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryNavy,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${currentWeight.toStringAsFixed(0)} kg',
-              style: const TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 12,
-                color: AppColors.textDarkSlate,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.backgroundWhite,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
           ),
-        ],
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+          const SizedBox(height: 12),
+          Stack(
+            alignment: Alignment.center,
             children: [
-              _buildNavItem(
-                icon: Icons.home,
-                label: 'Home',
-                isSelected: true,
-                onTap: () {},
+              SizedBox(
+                width: 70,
+                height: 70,
+                child: CircularProgressIndicator(
+                  value: progress,
+                  strokeWidth: 8,
+                  backgroundColor: AppColors.secondaryPastelBlue.withOpacity(0.3),
+                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primaryNavy),
+                ),
               ),
-              _buildNavItem(
-                icon: Icons.fitness_center,
-                label: 'Workouts',
-                isSelected: false,
-                onTap: () => context.push('/workouts'),
-              ),
-              _buildNavItem(
-                icon: Icons.restaurant_menu,
-                label: 'Nutrition',
-                isSelected: false,
-                onTap: () => context.push('/nutrition'),
-              ),
-              _buildNavItem(
-                icon: Icons.person,
-                label: 'Profile',
-                isSelected: false,
-                onTap: () => context.push('/profile'),
+              Text(
+                '${(progress * 100).toInt()}%',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primaryNavy,
+                ),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem({
-    required IconData icon,
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            color: isSelected ? AppColors.primaryNavy : AppColors.textDarkSlate.withOpacity(0.5),
-            size: 26,
-          ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 12,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-              color: isSelected ? AppColors.primaryNavy : AppColors.textDarkSlate.withOpacity(0.5),
+            '${currentWeight.toStringAsFixed(0)} kg',
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: AppColors.textDarkSlate,
             ),
           ),
         ],

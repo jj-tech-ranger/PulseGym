@@ -42,7 +42,7 @@ class StepAge extends StatelessWidget {
               width: 180,
               height: 180,
               decoration: BoxDecoration(
-                color: AppColors.secondaryPastel.withOpacity(0.3),
+                color: AppColors.secondaryPastelBlue.withOpacity(0.3),
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: AppColors.primaryNavy,
@@ -97,7 +97,7 @@ class StepAge extends StatelessWidget {
               SliderTheme(
                 data: SliderTheme.of(context).copyWith(
                   activeTrackColor: AppColors.primaryNavy,
-                  inactiveTrackColor: AppColors.secondaryPastel,
+                  inactiveTrackColor: AppColors.secondaryPastelBlue,
                   thumbColor: AppColors.primaryNavy,
                   overlayColor: AppColors.primaryNavy.withOpacity(0.2),
                   trackHeight: 8,
