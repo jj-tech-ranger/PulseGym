@@ -5,6 +5,10 @@ class Meal {
   final String name;
   final int calories;
   final String type; // Breakfast, Lunch, Dinner, Snack
+  final String? goal; // Weight Loss or Muscle Gain
+  final int? protein;
+  final int? carbs;
+  final int? fats;
   final String? imageAssetPath;
   final String? description;
   final int? prepTime; // in minutes
@@ -21,6 +25,10 @@ class Meal {
     this.prepTime,
     this.ingredients,
     this.instructions,
+    this.goal,
+    this.protein,
+    this.carbs,
+    this.fats,
   });
 
   /// Convert Meal to Map for SQLite
@@ -35,6 +43,10 @@ class Meal {
       'prep_time': prepTime,
       'ingredients': ingredients?.join('|'),
       'instructions': instructions,
+      'goal': goal,
+      'protein': protein,
+      'carbs': carbs,
+      'fats': fats,
     };
   }
 
@@ -50,6 +62,10 @@ class Meal {
       prepTime: map['prep_time'] as int?,
       ingredients: (map['ingredients'] as String?)?.split('|'),
       instructions: map['instructions'] as String?,
+      goal: map['goal'] as String?,
+      protein: map['protein'] as int?,
+      carbs: map['carbs'] as int?,
+      fats: map['fats'] as int?,
     );
   }
 
@@ -64,6 +80,10 @@ class Meal {
     int? prepTime,
     List<String>? ingredients,
     String? instructions,
+    String? goal,
+    int? protein,
+    int? carbs,
+    int? fats,
   }) {
     return Meal(
       id: id ?? this.id,
@@ -75,6 +95,10 @@ class Meal {
       prepTime: prepTime ?? this.prepTime,
       ingredients: ingredients ?? this.ingredients,
       instructions: instructions ?? this.instructions,
+      goal: goal ?? this.goal,
+      protein: protein ?? this.protein,
+      carbs: carbs ?? this.carbs,
+      fats: fats ?? this.fats,
     );
   }
 
