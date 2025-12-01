@@ -10,6 +10,7 @@ class Workout {
   final String? description;
   final int? calories;
   final String? targetMuscle;
+    final String? exercises;
 
   Workout({
     this.id,
@@ -21,6 +22,7 @@ class Workout {
     this.description,
     this.calories,
     this.targetMuscle,
+        this.exercises,
   });
 
   /// Convert Workout to Map for SQLite
@@ -35,6 +37,7 @@ class Workout {
       'description': description,
       'calories': calories,
       'target_muscle': targetMuscle,
+            'exercises': exercises,
     };
   }
 
@@ -50,6 +53,7 @@ class Workout {
       description: map['description'] as String?,
       calories: map['calories'] as int?,
       targetMuscle: map['target_muscle'] as String?,
+            exercises: map['exercises'] as String?,
     );
   }
 
@@ -64,6 +68,7 @@ class Workout {
     String? description,
     int? calories,
     String? targetMuscle,
+        String? exercises,
   }) {
     return Workout(
       id: id ?? this.id,
@@ -75,6 +80,7 @@ class Workout {
       description: description ?? this.description,
       calories: calories ?? this.calories,
       targetMuscle: targetMuscle ?? this.targetMuscle,
+            exercises: exercises ?? this.exercises,
     );
   }
 
