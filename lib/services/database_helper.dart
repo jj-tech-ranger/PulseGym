@@ -90,7 +90,11 @@ class DatabaseHelper {
         description TEXT,
         prep_time INTEGER,
         ingredients TEXT,
-        instructions TEXT
+        instructions TEXT,
+        goal TEXT,
+        protein INTEGER,
+        carbs INTEGER,
+        fats INTEGER
       )
     ''');
   }
