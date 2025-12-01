@@ -220,5 +220,120 @@ class DatabaseHelper {
     final result = await db.rawQuery('SELECT COUNT(*) FROM workouts');
     final count = Sqflite.firstIntValue(result) ?? 0;
     return count == 0;
+
+  // ==================== INSERT OPERATIONS ====================
+  
+  Future<int> insertWorkout(Workout workout) async {
+    final db = await database;
+    return await db.insert('workouts', workout.toMap());
+  }
+
+  Future<int> insertMeal(Meal meal) async {
+    final db = await database;
+    return await db.insert('meals', meal.toMap());
+  }
+
+  // ==================== UPDATE OPERATIONS ====================
+
+  Future<int> updatePost(CommunityPost post) async {
+    final db = await database;
+    return await db.update(
+      'community_posts',
+      post.toMap(),
+      where: 'id = ?',
+      whereArgs: [post.id],
+    );
+  }
+
+  Future<int> updateMeal(Meal meal) async {
+    final db = await database;
+    return await db.update(
+      'meals',
+      meal.toMap(),
+      where: 'id = ?',
+      whereArgs: [meal.id],
+    );
+  }
+
+  // ==================== DELETE OPERATIONS ====================
+
+  Future<int> deletePost(int id) async {
+    final db = await database;
+    return await db.delete(
+      'community_posts',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> deleteWorkout(int id) async {
+    final db = await database;
+    return await db.delete(
+      'workouts',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> deleteMeal(int id) async {
+    final db = await database;
+    return await db.delete(
+      'meals',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> deleteUser(int id) async {
+    final db = await database;
+    return await db.delete(
+      'users',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // ==================== QUERY HELPERS ====================
+
+  Future<List<Meal>> getMealsByGoal(String goal) async {
+    final db = await database;
+    final maps = await db.query(
+      'meals',
+      where: 'goal = ?',
+      whereArgs: [goal],
+    );
+    return maps.map((map) => Meal.fromMap(map)).toList();
+  }
+
+  Future<List<Meal>> getMealsByType(String type) async {
+    final db = await database;
+    final maps = await db.query(
+      'meals',
+      where: 'type = ?',
+      whereArgs: [type],
+    );
+    return maps.map((map) => Meal.fromMap(map)).toList();
+  }
+
+  Future<List<Workout>> getWorkoutsByCategory(String category) async {
+    final db = await database;
+    final maps = await db.query(
+      'workouts',
+      where: 'category = ?',
+      whereArgs: [category],
+    );
+    return maps.map((map) => Workout.fromMap(map)).toList();
+  }
+
+  Future<List<Workout>> getFavoriteWorkouts() async {
+    final db = await database;
+    final maps = await db.query(
+      'workouts',
+      where: 'is_favorite = ?',
+      whereArgs: [1],
+    );
+    return maps.map((map) => Workout.fromMap(map)).toList();
+  }
+
   }
 }
